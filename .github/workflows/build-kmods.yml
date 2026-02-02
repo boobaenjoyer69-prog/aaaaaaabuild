@@ -1,0 +1,50 @@
+name: Build ImmortalWrt kmods
+
+on:
+  workflow_dispatch:  # Allows manual run from Actions tab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ImmortalWrt
+        uses: actions/checkout@v3
+        with:
+          repository: immortalwrt/immortalwrt
+          ref: openwrt-24.10
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential clang flex bison g++ gawk \
+          gcc-multilib gettext git libncurses-dev libssl-dev \
+          python3 python3-distutils rsync unzip zlib1g-dev file wget
+
+      - name: Update feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Configure target and kmods
+        run: |
+          cat > .config <<EOF
+CONFIG_TARGET_ramips=y
+CONFIG_TARGET_ramips_mt7621=y
+CONFIG_PACKAGE_kmod-inet-diag=m
+CONFIG_PACKAGE_kmod-netlink-diag=m
+CONFIG_PACKAGE_kmod-tun=m
+EOF
+
+      - name: Build kmods
+        run: |
+          make defconfig
+          make package/kmod-inet-diag/compile -j$(nproc)
+          make package/kmod-netlink-diag/compile -j$(nproc)
+          make package/kmod-tun/compile -j$(nproc)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: kmods-ipk
+          path: bin/targets/ramips/mt7621/packages/*.ipk
