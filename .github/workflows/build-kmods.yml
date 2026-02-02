@@ -1,7 +1,7 @@
-name: Build ImmortalWrt kmods + sing-box
+name: Build ImmortalWrt kmods
 
 on:
-  workflow_dispatch:  # Allows manual trigger from Actions tab
+  workflow_dispatch:  # allows manual trigger
 
 jobs:
   build:
@@ -39,14 +39,14 @@ jobs:
           echo "CONFIG_PACKAGE_kmod-tun=m" >> .config
           make defconfig
 
-      # Step 5: Build only the required packages
-      - name: Build kernel modules + sing-box
+      # Step 5: Compile only the kernel modules
+      - name: Build kernel modules
         run: |
           make package/kmod-inet-diag/compile -j$(nproc)
           make package/kmod-netlink-diag/compile -j$(nproc)
           make package/kmod-tun/compile -j$(nproc)
 
-      # Step 6: Upload built .ipk files as artifacts
+      # Step 6: Upload .ipk files as artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
