@@ -27,13 +27,21 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Configure target and kmods
+      - name: Configure target, kernel, and kmods
         run: |
           echo "CONFIG_TARGET_ramips=y" > .config
           echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
+
+          # kernel options (REQUIRED)
+          echo "CONFIG_KERNEL_INET_DIAG=y" >> .config
+          echo "CONFIG_KERNEL_NETLINK_DIAG=y" >> .config
+          echo "CONFIG_KERNEL_TUN=y" >> .config
+
+          # kmods
           echo "CONFIG_PACKAGE_kmod-inet-diag=m" >> .config
           echo "CONFIG_PACKAGE_kmod-netlink-diag=m" >> .config
           echo "CONFIG_PACKAGE_kmod-tun=m" >> .config
+
           make defconfig
 
       - name: Build kernel modules
