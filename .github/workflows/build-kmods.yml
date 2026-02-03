@@ -1,21 +1,19 @@
 name: Build ImmortalWrt kmods
 
 on:
-  workflow_dispatch:  # allows manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout ImmortalWrt source
       - name: Checkout ImmortalWrt
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: immortalwrt/immortalwrt
           ref: openwrt-24.10
 
-      # Step 2: Install build dependencies
       - name: Install dependencies
         run: |
           sudo apt update
@@ -23,14 +21,12 @@ jobs:
           gcc-multilib gettext git libncurses-dev libssl-dev \
           python3 python3-distutils rsync unzip zlib1g-dev file wget
 
-      # Step 3: Update feeds
-      - name: Update & install feeds
+      - name: Update feeds
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      # Step 4: Configure target and kmods
-      - name: Configure target and kernel modules
+      - name: Configure target and kmods
         run: |
           echo "CONFIG_TARGET_ramips=y" > .config
           echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
@@ -39,16 +35,14 @@ jobs:
           echo "CONFIG_PACKAGE_kmod-tun=m" >> .config
           make defconfig
 
-      # Step 5: Compile only the kernel modules
       - name: Build kernel modules
         run: |
           make package/kmod-inet-diag/compile -j$(nproc)
           make package/kmod-netlink-diag/compile -j$(nproc)
           make package/kmod-tun/compile -j$(nproc)
 
-      # Step 6: Upload .ipk files as artifacts
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+      - name: Upload kmod ipks
+        uses: actions/upload-artifact@v4
         with:
           name: kmods-ipk
           path: bin/targets/ramips/mt7621/packages/*.ipk
